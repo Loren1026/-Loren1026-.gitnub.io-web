@@ -1,0 +1,504 @@
+<!-- Chosen Palette: Truth Seeker (Deep Slate, Indigo, Alert Red, Success Green) -->
+<!-- Application Structure Plan: 
+    The application is structured into four logical stages that mirror the lesson plan's flow:
+    1.  **The Database (Knowledge Base):** Visualizes the abstract concept of a Python List containing rumors. This addresses the "Decomposition" phase.
+    2.  **The Algorithm (Visualizer):** A slowed-down, step-by-step animation of Sequential Search. This addresses the "Abstraction" & "Concept" phase, showing how the computer "reads" one by one.
+    3.  **The Simulator (Implementation):** The functional "Fake News Buster" tool that students are tasked to build. It allows real input and instant checking.
+    4.  **Performance Lab (Assessment/Reflection):** A Chart.js visualization showing the O(N) time complexity, facilitating the discussion on "what if we have 1 million rumors?".
+-->
+<!-- Visualization & Content Choices: 
+    * **Report Info:** Activity 3 Lesson Plan (Fake News Checker).
+    * **Goal:** Teach Sequential Search logic applied to string matching.
+    * **Visualization:** * **Database:** Grid of cards representing list items.
+        * **Algo Visualizer:** JS-driven highlighting of cards to mimic the loop index.
+        * **Performance:** Line chart (Chart.js) comparing Data Size vs. Comparisons.
+    * **Interaction:** User inputs text -> System animates the search -> System plots data.
+    * **Justification:** Visualizing the "loop" helps students understand why it's called "Sequential" and why it's slow for large data.
+    * **Confirmation:** NO SVG graphics used. NO Mermaid JS used.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>專題：假新聞查核系統 - 循序搜尋法實戰</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f1f5f9; /* Slate 100 */
+            color: #1e293b; /* Slate 800 */
+        }
+        .glass-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+        .rumor-card {
+            transition: all 0.3s ease;
+        }
+        .rumor-card.active {
+            border-color: #6366f1; /* Indigo 500 */
+            background-color: #eef2ff; /* Indigo 50 */
+            transform: scale(1.02);
+            box-shadow: 0 0 0 2px #6366f1;
+        }
+        .rumor-card.found {
+            border-color: #ef4444; /* Red 500 */
+            background-color: #fef2f2; /* Red 50 */
+            color: #b91c1c;
+        }
+        .rumor-card.checked {
+            opacity: 0.5;
+        }
+        /* Chart Container Styling per Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header / Motivation -->
+    <header class="bg-slate-900 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                    <span class="bg-indigo-500 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">活動三：專題實作</span>
+                    <h1 class="text-3xl font-bold mt-2">謠言終結者 (Rumor Buster)</h1>
+                    <p class="text-slate-400 mt-2 text-sm max-w-2xl">
+                        利用「循序搜尋法」打造假新聞查核系統。在資訊爆炸的時代，我們不僅要學會寫程式，更要學會辨識資訊的真偽。
+                    </p>
+                </div>
+                <div class="mt-4 md:mt-0 bg-slate-800 p-4 rounded-lg border-l-4 border-indigo-500">
+                    <p class="text-sm font-mono text-indigo-300">目標演算法：循序搜尋 (Sequential Search)</p>
+                    <p class="text-sm font-mono text-indigo-300">核心邏輯：List + Loop + If/Else</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 w-full">
+
+        <!-- Section 1: Decomposition (The Database) -->
+        <section>
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+                    <span class="bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">1</span>
+                    資料庫拆解 (Database)
+                </h2>
+                <p class="text-slate-600 mt-2 ml-11">
+                    這是我們拆解出的第一個元素：「已知的謠言資料庫」。在 Python 中，我們使用 <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600 font-mono">List</code> 來儲存這些字串。
+                </p>
+            </div>
+
+            <div class="glass-panel p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-slate-700">已知謠言列表 (Rumor List)</h3>
+                    <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">資料筆數: <span id="db-count">0</span></span>
+                </div>
+                <!-- Dynamic Rumor Grid -->
+                <div id="rumor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- JS will populate this -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Abstraction & Concept (Algorithm Visualization) -->
+        <section>
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+                    <span class="bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">2</span>
+                    演算法透視 (Visualizer)
+                </h2>
+                <p class="text-slate-600 mt-2 ml-11">
+                    電腦是如何「閱讀」並比對資料的？讓我們將抽象的「循序搜尋」具象化。當你輸入標題時，系統會從索引 0 開始，逐一比對。
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Controls -->
+                <div class="glass-panel p-6 lg:col-span-1 flex flex-col justify-center space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">測試標題輸入</label>
+                        <textarea id="visual-input" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm" rows="3" placeholder="請輸入新聞標題 (例如：喝檸檬水...)"></textarea>
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="fillExample('喝檸檬水可以治療癌症')" class="text-xs bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded text-slate-600">範例：檸檬水</button>
+                            <button onclick="fillExample('明天開始放假')" class="text-xs bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded text-slate-600">範例：放假 (不存在)</button>
+                        </div>
+                    </div>
+                    
+                    <button id="btn-visualize" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-colors flex items-center justify-center">
+                        <span>👁️ 啟動視覺化搜尋</span>
+                    </button>
+
+                    <div id="visual-status" class="hidden p-4 rounded-lg bg-slate-50 border border-slate-200 text-sm">
+                        <p class="font-mono text-slate-500">Index: <span id="status-index" class="font-bold text-indigo-600">-</span></p>
+                        <p class="font-mono text-slate-500">比較次數: <span id="status-count" class="font-bold text-indigo-600">0</span></p>
+                        <p id="status-msg" class="mt-2 font-bold text-slate-800">等待啟動...</p>
+                    </div>
+                </div>
+
+                <!-- Visualization Stage -->
+                <div class="glass-panel p-6 lg:col-span-2 bg-slate-50 overflow-hidden relative">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-slate-200">
+                        <div id="progress-bar" class="h-full bg-indigo-500 w-0 transition-all duration-300"></div>
+                    </div>
+                    
+                    <div class="h-full flex flex-col items-center justify-center text-center">
+                        <div id="comparison-stage" class="w-full max-w-md space-y-4 opacity-50 pointer-events-none transition-opacity">
+                            <!-- Target -->
+                            <div class="bg-white p-4 rounded-lg shadow border border-slate-200">
+                                <span class="text-xs text-slate-400 uppercase font-bold block mb-1">目標 (Target)</span>
+                                <p id="stage-target" class="text-lg font-medium text-slate-800">...</p>
+                            </div>
+                            
+                            <div class="text-2xl text-slate-400 font-bold">VS</div>
+
+                            <!-- Current Item -->
+                            <div class="bg-white p-4 rounded-lg shadow border border-slate-200 relative overflow-hidden">
+                                <span class="text-xs text-slate-400 uppercase font-bold block mb-1">資料庫項目 (List[i])</span>
+                                <p id="stage-current" class="text-lg font-medium text-slate-800">...</p>
+                                <div id="match-indicator" class="absolute inset-0 flex items-center justify-center bg-red-500/90 text-white font-bold text-xl transform translate-y-full transition-transform">
+                                    ⚠️ 發現謠言！
+                                </div>
+                            </div>
+                        </div>
+                        <div id="stage-idle" class="absolute inset-0 flex items-center justify-center text-slate-400">
+                            <p>請輸入標題並點擊「啟動視覺化搜尋」</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Implementation (The Final Product) -->
+        <section>
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+                    <span class="bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">3</span>
+                    查核系統實作 (Final System)
+                </h2>
+                <p class="text-slate-600 mt-2 ml-11">
+                    這是各位「資訊查證員」最終要完成的程式介面。結合了資料庫、演算法與使用者輸入。試著操作看看！
+                </p>
+            </div>
+
+            <div class="glass-panel bg-gradient-to-br from-slate-800 to-slate-900 text-white p-8 rounded-xl shadow-2xl">
+                <div class="max-w-2xl mx-auto text-center space-y-6">
+                    <h3 class="text-2xl font-bold tracking-tight text-indigo-300">🛡️ 假新聞快速查核站</h3>
+                    
+                    <div class="relative">
+                        <input type="text" id="system-input" 
+                            class="w-full bg-slate-700/50 border border-slate-600 rounded-full py-4 px-6 pl-12 text-white placeholder-slate-400 focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none transition-all"
+                            placeholder="貼上可疑的新聞標題...">
+                        <span class="absolute left-4 top-4 text-slate-400">🔍</span>
+                    </div>
+
+                    <button onclick="systemCheck()" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-full shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-1">
+                        立即查證
+                    </button>
+
+                    <!-- Result Area -->
+                    <div id="system-result" class="hidden mt-8 p-6 rounded-lg border border-slate-600 bg-slate-800/50 backdrop-blur-sm">
+                        <div id="result-icon" class="text-4xl mb-2"></div>
+                        <h4 id="result-title" class="text-xl font-bold mb-2"></h4>
+                        <p id="result-desc" class="text-slate-300"></p>
+                        <div class="mt-4 pt-4 border-t border-slate-700 flex justify-center gap-8 text-sm font-mono text-slate-400">
+                            <span>比對次數: <b id="result-count" class="text-white">0</b></span>
+                            <span>耗時: <b class="text-white">&lt; 1ms</b></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Assessment & Reflection (Performance) -->
+        <section class="pb-12">
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+                    <span class="bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">4</span>
+                    效能反思 (Reflection)
+                </h2>
+                <p class="text-slate-600 mt-2 ml-11">
+                    如果謠言資料庫從 10 筆增加到 100 萬筆，會發生什麼事？這張圖表展示了「循序搜尋」的效能特徵 (O(N))。
+                </p>
+            </div>
+
+            <div class="glass-panel p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                    <div class="md:col-span-1 space-y-4">
+                        <h3 class="font-bold text-lg text-slate-700">時間複雜度 O(N)</h3>
+                        <p class="text-sm text-slate-600">
+                            在「最差情況」下（謠言在最後一筆，或是根本不在資料庫中），我們必須檢查每一筆資料。
+                        </p>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-center text-indigo-600">
+                                <span class="w-2 h-2 bg-indigo-600 rounded-full mr-2"></span>
+                                資料越多，搜尋越慢 (線性關係)
+                            </li>
+                            <li class="flex items-center text-slate-600">
+                                <span class="w-2 h-2 bg-slate-400 rounded-full mr-2"></span>
+                                10 筆資料 -> 最多比較 10 次
+                            </li>
+                            <li class="flex items-center text-slate-600">
+                                <span class="w-2 h-2 bg-slate-400 rounded-full mr-2"></span>
+                                100 萬筆資料 -> 最多比較 100 萬次
+                            </li>
+                        </ul>
+                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                            <strong>思考：</strong> Google 搜尋能在 0.1 秒內搜完幾億個網頁，他們是用循序搜尋嗎？(當然不是！)
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2 flex justify-center">
+                        <!-- Chart Container -->
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // 1. Database Logic
+        const rumorDB = [
+            "喝檸檬水可以治療癌症",
+            "下週一起交通罰款加倍",
+            "手機電磁波會煮熟腦漿",
+            "某牌清潔劑有劇毒請勿使用",
+            "吃香蕉喝牛奶會中毒",
+            "LINE 轉傳連結會中毒",
+            "微波爐加熱食物會產生致癌物",
+            "打疫苗會導致基因突變"
+        ];
+
+        const rumorGrid = document.getElementById('rumor-grid');
+        const dbCountSpan = document.getElementById('db-count');
+
+        function renderDatabase() {
+            rumorGrid.innerHTML = '';
+            dbCountSpan.textContent = rumorDB.length;
+            
+            rumorDB.forEach((rumor, index) => {
+                const card = document.createElement('div');
+                card.className = 'rumor-card bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between h-24';
+                card.id = `card-${index}`;
+                card.innerHTML = `
+                    <p class="text-sm font-medium text-slate-700 line-clamp-2">"${rumor}"</p>
+                    <span class="text-xs text-slate-400 font-mono text-right w-full">Index: ${index}</span>
+                `;
+                rumorGrid.appendChild(card);
+            });
+        }
+
+        // 2. Algorithm Visualizer Logic
+        let isVisualizing = false;
+
+        function fillExample(text) {
+            document.getElementById('visual-input').value = text;
+        }
+
+        async function startVisualization() {
+            if (isVisualizing) return;
+            
+            const input = document.getElementById('visual-input').value.trim();
+            if (!input) {
+                alert("請先輸入要搜尋的標題！");
+                return;
+            }
+
+            // Reset UI
+            isVisualizing = true;
+            renderDatabase(); // Reset cards
+            document.getElementById('btn-visualize').disabled = true;
+            document.getElementById('btn-visualize').classList.add('opacity-50');
+            document.getElementById('visual-status').classList.remove('hidden');
+            document.getElementById('stage-idle').classList.add('hidden');
+            document.getElementById('comparison-stage').classList.remove('opacity-50', 'pointer-events-none');
+            document.getElementById('stage-target').textContent = input;
+            document.getElementById('match-indicator').classList.add('translate-y-full'); // Hide alert
+
+            const statusMsg = document.getElementById('status-msg');
+            const statusIndex = document.getElementById('status-index');
+            const statusCount = document.getElementById('status-count');
+            const stageCurrent = document.getElementById('stage-current');
+            const progressBar = document.getElementById('progress-bar');
+
+            let found = false;
+
+            // The Loop
+            for (let i = 0; i < rumorDB.length; i++) {
+                // Update Status
+                statusIndex.textContent = i;
+                statusCount.textContent = i + 1;
+                statusMsg.textContent = `正在比對 Index ${i}...`;
+                progressBar.style.width = `${((i + 1) / rumorDB.length) * 100}%`;
+                
+                // Update Stage
+                stageCurrent.textContent = rumorDB[i];
+
+                // Highlight Card in DB Section (Visual Connection)
+                const card = document.getElementById(`card-${i}`);
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.add('active');
+
+                // Wait (Simulate "Thinking")
+                await new Promise(r => setTimeout(r, 800));
+
+                // Compare
+                if (rumorDB[i].includes(input) || input.includes(rumorDB[i])) {
+                    // FOUND!
+                    found = true;
+                    card.classList.remove('active');
+                    card.classList.add('found');
+                    statusMsg.textContent = `找到了！在 Index ${i}`;
+                    statusMsg.className = "mt-2 font-bold text-green-600";
+                    document.getElementById('match-indicator').classList.remove('translate-y-full'); // Show alert
+                    
+                    break; // Break the loop
+                } else {
+                    // NOT FOUND
+                    card.classList.remove('active');
+                    card.classList.add('checked');
+                }
+            }
+
+            if (!found) {
+                statusMsg.textContent = "搜尋結束。資料庫中未發現此謠言。";
+                statusMsg.className = "mt-2 font-bold text-slate-600";
+            }
+
+            isVisualizing = false;
+            document.getElementById('btn-visualize').disabled = false;
+            document.getElementById('btn-visualize').classList.remove('opacity-50');
+        }
+
+        document.getElementById('btn-visualize').addEventListener('click', startVisualization);
+
+        // 3. Implementation System Logic (Instant)
+        function systemCheck() {
+            const input = document.getElementById('system-input').value.trim();
+            const resultArea = document.getElementById('system-result');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-desc');
+            const count = document.getElementById('result-count');
+
+            if (!input) return;
+
+            // Sequential Search Implementation
+            let foundIndex = -1;
+            let comparisons = 0;
+
+            for (let i = 0; i < rumorDB.length; i++) {
+                comparisons++;
+                if (rumorDB[i].includes(input) || input.includes(rumorDB[i])) {
+                    foundIndex = i;
+                    break;
+                }
+            }
+
+            resultArea.classList.remove('hidden');
+            
+            if (foundIndex !== -1) {
+                // Found
+                resultArea.className = "mt-8 p-6 rounded-lg border border-red-500 bg-red-900/20 backdrop-blur-sm";
+                icon.textContent = "⚠️";
+                title.textContent = "警告：發現相符的謠言！";
+                title.className = "text-xl font-bold mb-2 text-red-400";
+                desc.textContent = `系統在資料庫索引 [${foundIndex}] 找到了相似內容：「${rumorDB[foundIndex]}」。建議您停止轉傳並查證。`;
+            } else {
+                // Not Found
+                resultArea.className = "mt-8 p-6 rounded-lg border border-green-500 bg-green-900/20 backdrop-blur-sm";
+                icon.textContent = "✅";
+                title.textContent = "查無相符資料";
+                title.className = "text-xl font-bold mb-2 text-green-400";
+                desc.textContent = "系統資料庫中暫無此紀錄。但請注意，這不代表它是真的，可能只是尚未被收錄。";
+            }
+            count.textContent = comparisons;
+        }
+
+        // 4. Performance Chart Logic
+        function initChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Generate Data for O(N)
+            const dataPoints = [10, 100, 1000, 10000, 100000];
+            const worstCase = dataPoints; // O(N) means N comparisons
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['10筆', '100筆', '1千筆', '1萬筆', '10萬筆'],
+                    datasets: [{
+                        label: '最差情況比較次數 (O(N))',
+                        data: worstCase,
+                        borderColor: '#6366f1', // Indigo 500
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 2,
+                        tension: 0, // Straight lines for linear relationship
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `需比較: ${context.raw.toLocaleString()} 次`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '比較次數'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '資料量 (N)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        renderDatabase();
+        initChart();
+
+    </script>
+</body>
+</html>
