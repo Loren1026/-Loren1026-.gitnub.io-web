@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>專題：謠言終結者 (Python版)</title>
+    <!-- 引入 PyScript，讓瀏覽器可以直接跑 Python -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 p-10 font-sans">
+
+    <!-- 這是老師準備好的漂亮介面，學生不用動 -->
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold text-indigo-600 mb-2">🛡️ 謠言終結者</h1>
+        <p class="text-gray-500 mb-6">核心邏輯由 Python 驅動</p>
+
+        <!-- 輸入區 -->
+        <div class="mb-4">
+            <label class="block text-gray-700 font-bold mb-2">輸入新聞標題：</label>
+            <input type="text" id="user_input" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如：聽說喝檸檬水可以抗癌...">
+        </div>
+
+        <!-- 按鈕 -->
+        <button py-click="check_rumor" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition">
+            開始查證 (呼叫 Python)
+        </button>
+
+        <!-- 結果顯示區 -->
+        <div id="result_area" class="hidden mt-6 p-4 rounded-lg border-l-4">
+            <h3 id="result_title" class="text-xl font-bold"></h3>
+            <p id="result_desc" class="mt-1"></p>
+            <p id="result_stats" class="text-sm text-gray-500 mt-2 font-mono"></p>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!--         學生作業區：請在此處撰寫 Python 程式碼           -->
+    <!-- ======================================================== -->
+    <script type="py">
+        from pyscript import document
+
+        # 1. 資料庫 (已準備好)
+        rumor_database = [
+            "LINE 轉傳連結會中毒",
+            "喝熱檸檬水可以治療癌症",
+            "吃香蕉喝牛奶會導致中毒",
+            "下週一起交通罰款加倍",
+            "微波爐加熱食物會產生致癌物",
+            "手機電磁波會煮熟腦漿",
+            "柿子和螃蟹一起吃會中毒身亡",
+            "打疫苗會導致基因突變"
+        ]
+
+        # 2. 核心演算法 (學生請完成這個函式)
+        def sequential_search(target):
+            # --- 請在下方寫迴圈與判斷 ---
+            # 提示：使用 for i in range(len(rumor_database)):
+            
+            for i in range(len(rumor_database)):
+                # 取得資料庫中的那一條謠言
+                rumor = rumor_database[i]
+                
+                # 比對：如果 謠言 在 目標 裡面 (或反過來)
+                if rumor in target or target in rumor:
+                    return i  # 找到了，回傳索引 (Index)
+            
+            # ---------------------------
+            return -1 # 沒找到
+
+        # 3. 按鈕事件 (老師已寫好，負責把 Python 結果顯示在網頁上)
+        def check_rumor(event):
+            # 取得網頁輸入框的值
+            input_text = document.querySelector("#user_input").value
+            
+            if not input_text:
+                return
+
+            # 呼叫學生的函式
+            result_index = sequential_search(input_text)
+
+            # 顯示結果 (操作網頁元素)
+            result_area = document.querySelector("#result_area")
+            result_title = document.querySelector("#result_title")
+            result_desc = document.querySelector("#result_desc")
+            result_area.classList.remove("hidden")
+
+            if result_index != -1:
+                # 找到了
+                result_area.className = "mt-6 p-4 rounded-lg border-l-4 bg-red-50 border-red-500 text-red-900"
+                result_title.innerText = "⚠️ 警告：發現謠言！"
+                result_desc.innerText = f"比對符合：{rumor_database[result_index]}"
+            else:
+                # 沒找到
+                result_area.className = "mt-6 p-4 rounded-lg border-l-4 bg-green-50 border-green-500 text-green-900"
+                result_title.innerText = "✅ 查無相符資料"
+                result_desc.innerText = "資料庫中未發現此紀錄，但仍請保持警覺。"
+
+    </script>
+</body>
+</html>
